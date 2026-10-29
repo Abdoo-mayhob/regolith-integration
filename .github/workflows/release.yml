@@ -1,0 +1,68 @@
+# Ships a release whenever the plugin version changes on main.
+#
+# Developer steps: bump "Version:" and REGOLITH_PLUGIN_VERSION in regolith-integration.php,
+# commit, push to main. That's it. This workflow then:
+#   1. checks both versions match and are X.Y.Z
+#   2. stops quietly if tag vX.Y.Z already exists (pushes that don't change the version)
+#   3. lints every PHP file
+#   4. builds regolith-integration.zip (git archive, so .gitattributes export-ignore applies)
+#   5. creates tag + GitHub release with the zip attached and notes generated from commits
+# Installed sites see the update within 12 hours (class-updater.php).
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ['regolith-integration.php']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: v
+        run: |
+          header=$(sed -n 's/^ \* Version: *//p' regolith-integration.php | tr -d '\r' | head -n1)
+          const=$(sed -n "s/^define('REGOLITH_PLUGIN_VERSION', '\([^']*\)');.*/\1/p" regolith-integration.php | tr -d '\r' | head -n1)
+          if [[ ! "$header" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version '$header' must be three parts, like 1.2.3"; exit 1
+          fi
+          if [[ "$header" != "$const" ]]; then
+            echo "::error::Header says $header but REGOLITH_PLUGIN_VERSION says $const"; exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v$header" >/dev/null; then
+            echo "v$header already released, nothing to do."
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$header" >> "$GITHUB_OUTPUT"
+
+      - name: Lint PHP
+        if: steps.v.outputs.new == 'true'
+        run: find . -name '*.php' -not -path './plugin-update-checker-5.7/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Build zip
+        if: steps.v.outputs.new == 'true'
+        run: git archive --format=zip --prefix=regolith-integration/ -o regolith-integration.zip HEAD
+
+      - name: Publish release
+        if: steps.v.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.v.outputs.version }}" regolith-integration.zip \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.v.outputs.version }}" \
+            --generate-notes

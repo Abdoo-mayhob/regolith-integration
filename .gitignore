@@ -1,0 +1,20 @@
+# Regolith Integration (this folder is the repository root)
+
+# Logs (the dev HTTP logger writes to wp-content/uploads, but just in case)
+*.log
+
+# Release zips built locally (the GitHub workflow builds its own)
+*.zip
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local tooling
+node_modules/
+vendor/
+!plugin-update-checker-5.7/vendor/
+.env

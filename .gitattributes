@@ -1,0 +1,5 @@
+# Left out of release zips (git archive). Dev tooling and docs stay in the repo only.
+/.gitignore            export-ignore
+/.gitattributes        export-ignore
+/.github               export-ignore
+/README.md             export-ignore
