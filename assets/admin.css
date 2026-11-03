@@ -1329,6 +1329,151 @@ a.reg-tile:hover {
 	max-width: none;
 }
 
+/* MARK: Live / Staging switch */
+.reg-env {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: auto;
+	position: relative;
+}
+
+.reg-env__label {
+	color: #9fb8b2;
+	font: 600 11px/1 var(--reg-font);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.reg-env__switch {
+	display: inline-flex;
+	padding: 3px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.reg-env__option {
+	border: 0;
+	background: transparent;
+	color: #c9dbd7;
+	font: 600 13px/1 var(--reg-font);
+	padding: 8px 16px;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s;
+}
+
+.reg-env__option:hover:not(:disabled):not(.is-active) {
+	color: #fff;
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.reg-env__option:focus-visible {
+	outline: 2px solid var(--reg-mint);
+	outline-offset: 1px;
+}
+
+/* Live is the real thing: mint. Staging is a test server: amber, so nobody mistakes it. */
+.reg-env__option--live.is-active {
+	background: var(--reg-mint);
+	color: var(--reg-navy);
+}
+
+.reg-env__option--staging.is-active {
+	background: #f6c86b;
+	color: #3d2a00;
+}
+
+.reg-env__option:disabled:not(.is-active) {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.reg-env.is-locked .reg-env__option.is-active {
+	cursor: default;
+}
+
+.reg-env__lock {
+	width: 10px;
+	height: 8px;
+	border-radius: 2px;
+	background: #9fb8b2;
+	position: relative;
+	margin-left: -2px;
+}
+
+.reg-env__lock::before {
+	content: "";
+	position: absolute;
+	left: 2px;
+	top: -5px;
+	width: 6px;
+	height: 6px;
+	border: 1.5px solid #9fb8b2;
+	border-bottom: 0;
+	border-radius: 4px 4px 0 0;
+	box-sizing: border-box;
+}
+
+.reg-env.is-busy {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.reg-wizard__spacer {
+	flex: 1;
+}
+
+.reg-wizard__top .reg-env {
+	margin: 0 18px 0 0;
+}
+
+/* Two server fieldsets side by side */
+.reg-form--wide {
+	max-width: 860px;
+}
+
+.reg-servers {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.reg-server {
+	border: 1px solid var(--reg-border);
+	border-radius: var(--reg-radius);
+	padding: 4px 16px 14px;
+	margin: 0;
+	min-width: 0;
+}
+
+.reg-server.is-active {
+	border-color: var(--reg-teal);
+	background: var(--reg-teal-soft);
+}
+
+.reg-server legend {
+	font-weight: 700;
+	color: var(--reg-navy);
+	padding: 0 6px;
+}
+
+.reg-radio-inline {
+	display: inline-flex;
+	gap: 6px;
+	align-items: center;
+	margin-top: 12px;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+@media (max-width: 782px) {
+	.reg-servers {
+		grid-template-columns: 1fr;
+	}
+}
+
 /* MARK: Toast */
 .reg-toast {
 	position: fixed;

@@ -4,7 +4,7 @@
  * Plugin Name:       Regolith Integration
  * Plugin URI:        https://regolithapp.com/
  * Description:       Lists your WooCommerce catalog on Regolith and keeps it in sync automatically.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Requires Plugins:  woocommerce
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 // Keep in sync with "Version:" above. The release workflow refuses to release when they differ
 // or aren't X.Y.Z. Three parts (1.2.3): PHP's version_compare thinks "0.1" < "0.1.0".
-define('REGOLITH_PLUGIN_VERSION', '0.1.0');
+define('REGOLITH_PLUGIN_VERSION', '0.2.0');
 define('REGOLITH_PLUGIN_FILE', __FILE__);
 
 // MARK: Updates
@@ -42,6 +42,10 @@ add_action('plugins_loaded', function () {
 		return;
 	}
 
+
+	// First: routes the per-server options (key, URL, store number…) to Live or Staging.
+	require_once plugin_dir_path(__FILE__) . 'class-environment.php';
+	Reg_Env::I();
 
 	require_once plugin_dir_path(__FILE__) . 'class-sync-db.php';
 	require_once plugin_dir_path(__FILE__) . 'class-product-serializer.php';

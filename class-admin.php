@@ -89,8 +89,6 @@ class Reg_Admin
 
 	private function tab_connection()
 	{
-		$key      = get_option('regolith_api_key', '');
-		$url      = get_option('regolith_api_url', '');
 		$store_id = Reg_API::I()->get_store_id();
 		$status   = get_option('regolith_onboarding_status', '');
 		$blocked  = Reg_Sync_Service::I()->get_block();
@@ -101,23 +99,14 @@ class Reg_Admin
 				$msg = Reg_Messages::get($blocked['code'], $blocked['message']); ?>
 				<div class="reg-alert reg-alert--error"><strong><?php echo esc_html($msg['title']); ?>.</strong> <?php echo esc_html($msg['help']); ?></div>
 			<?php elseif ($store_id) : ?>
-				<div class="reg-alert reg-alert--ok"><strong>Connected.</strong> <?php echo esc_html(sprintf('Store #%d, status: %s.', $store_id, $this->human_status($status))); ?></div>
+				<div class="reg-alert reg-alert--ok"><strong>Connected.</strong> <?php echo esc_html(sprintf('%s server, store #%d, status: %s.', Reg_Env::LABELS[Reg_Env::I()->active()], $store_id, $this->human_status($status))); ?></div>
 			<?php else : ?>
 				<div class="reg-alert reg-alert--warn"><strong>Not connected.</strong> <a href="<?php echo esc_url(Reg_UI::url('setup')); ?>">Run the setup</a>.</div>
 			<?php endif; ?>
 
-			<form class="reg-form" data-reg-connect-form data-reg-stay>
-				<label class="reg-label" for="reg-api-key">API key</label>
-				<div class="reg-input-group">
-					<input class="reg-input" type="password" id="reg-api-key" name="api_key" autocomplete="new-password" placeholder="<?php echo $key ? esc_attr('Saved, ends with …' . substr($key, -4)) : 'rg_…'; ?>">
-					<button type="button" class="reg-btn reg-btn--ghost reg-btn--small" data-reg-toggle-secret="#reg-api-key">Show</button>
-				</div>
-				<p class="reg-muted">Leave empty to keep the saved key. New keys are created in your <a href="<?php echo esc_url(Reg_Messages::DASHBOARD_URL); ?>" target="_blank" rel="noopener">Regolith dashboard</a>.</p>
-
-				<details class="reg-disclosure">
-					<summary>Regolith server address</summary>
-					<input class="reg-input" type="url" name="api_url" value="<?php echo esc_attr($url); ?>" placeholder="https://…">
-				</details>
+			<form class="reg-form reg-form--wide" data-reg-connect-form data-reg-stay>
+				<?php Reg_Env::I()->render_server_fields(); ?>
+				<p class="reg-muted">New keys are created in your <a href="<?php echo esc_url(Reg_Messages::DASHBOARD_URL); ?>" target="_blank" rel="noopener">Regolith dashboard</a>.</p>
 
 				<div class="reg-form__actions">
 					<button type="button" class="reg-btn reg-btn--primary" data-reg-connect>Save and test connection</button>

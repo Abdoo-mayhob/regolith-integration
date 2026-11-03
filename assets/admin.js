@@ -102,10 +102,7 @@
 		busy($btn, true);
 		status($scope, 'Checking your key with Regolith…');
 
-		post('regolith_wizard_connect', {
-			api_key: $form.find('[name="api_key"]').val() || '',
-			api_url: $form.find('[name="api_url"]').val() || ''
-		}).done(function (res) {
+		post('regolith_wizard_connect', $form.serialize()).done(function (res) {
 			if (!res.success) {
 				status($scope, errorText(res), 'error');
 				busy($btn, false);
@@ -540,6 +537,32 @@
 			toast('Request failed, please try again.', true);
 		}).always(function () {
 			busy($btn, false);
+		});
+	});
+
+	// MARK: Live / Staging switch (Reg_Env)
+
+	$(document).on('click', '[data-reg-env-target]', function (e) {
+		e.preventDefault();
+		var $btn = $(this);
+		if ($btn.is(':disabled') || $btn.hasClass('is-active')) {
+			return;
+		}
+		var label = $.trim($btn.text());
+		if (!window.confirm('Switch this store to the ' + label + ' Regolith server?\n\nProduct updates will go to ' + label + ' from now on. If this store isn\'t set up on ' + label + ' yet, the setup wizard will guide you.')) {
+			return;
+		}
+		var $wrap = $btn.closest('[data-reg-env]').addClass('is-busy');
+		post('regolith_switch_env', { env: $btn.data('reg-env-target') }).done(function (res) {
+			if (res.success) {
+				window.location.reload();
+			} else {
+				$wrap.removeClass('is-busy');
+				toast(errorText(res), true);
+			}
+		}).fail(function () {
+			$wrap.removeClass('is-busy');
+			toast('Couldn\'t switch, please try again.', true);
 		});
 	});
 

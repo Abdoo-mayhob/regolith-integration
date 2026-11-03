@@ -205,6 +205,8 @@ class Reg_Wizard
 		<div class="reg-wizard" data-reg-wizard data-step="<?php echo esc_attr($current); ?>">
 			<header class="reg-wizard__top">
 				<img src="<?php echo esc_url(Reg_UI::asset_url('img/regolith-logo-white.svg')); ?>" alt="Regolith" width="138" height="40">
+				<span class="reg-wizard__spacer"></span>
+				<?php Reg_Env::I()->render_switch(); ?>
 				<a class="reg-wizard__exit" href="<?php echo esc_url($this->is_complete() ? Reg_UI::url('overview') : admin_url()); ?>">
 					<?php echo $this->is_complete() ? 'Go to Regolith overview' : 'Save and exit'; ?>
 				</a>
@@ -305,8 +307,6 @@ class Reg_Wizard
 	private function step_connect()
 	{
 		$connected = $this->is_connected() && ! is_wp_error($this->state());
-		$url       = get_option('regolith_api_url', '');
-		$key       = get_option('regolith_api_key', '');
 		$store     = $connected ? ($this->state()['store'] ?? []) : [];
 		?>
 		<h1>Connect your Regolith account</h1>
@@ -314,32 +314,20 @@ class Reg_Wizard
 		<?php if ($connected) : ?>
 			<div class="reg-alert reg-alert--ok">
 				<strong>Connected.</strong>
-				<?php echo esc_html(sprintf('This store (%s) is linked to Regolith as store #%d.', $store['siteUrl'] ?? home_url(), Reg_API::I()->get_store_id())); ?>
+				<?php echo esc_html(sprintf('This store (%s) is linked to the %s Regolith server as store #%d.', $store['siteUrl'] ?? home_url(), Reg_Env::LABELS[Reg_Env::I()->active()], Reg_API::I()->get_store_id())); ?>
 			</div>
 		<?php else : ?>
-			<p class="reg-lead">Paste your Integration API key below. We'll check it and link this store to your Regolith account.</p>
+			<p class="reg-lead">Enter the Regolith server address and Integration API key you received. Regolith may give you a Live server, a Staging (test) server, or both. We'll check the one you choose and link this store to your account.</p>
 		<?php endif; ?>
 
-		<form class="reg-form" data-reg-connect-form <?php echo $connected ? 'hidden' : ''; ?>>
-			<label class="reg-label" for="reg-api-key">API key</label>
-			<div class="reg-input-group">
-				<input class="reg-input" type="password" id="reg-api-key" name="api_key" autocomplete="off" placeholder="rg_…" value="">
-				<button type="button" class="reg-btn reg-btn--ghost reg-btn--small" data-reg-toggle-secret="#reg-api-key">Show</button>
-			</div>
-			<?php if ($key) : ?><p class="reg-muted">A key ending in …<?php echo esc_html(substr($key, -4)); ?> is saved. Leave empty to use it.</p><?php endif; ?>
-
-			<details class="reg-disclosure" <?php echo $url ? '' : 'open'; ?>>
-				<summary>Regolith server address</summary>
-				<label class="reg-label" for="reg-api-url">Server address</label>
-				<input class="reg-input" type="url" id="reg-api-url" name="api_url" value="<?php echo esc_attr($url); ?>" placeholder="https://…">
-				<p class="reg-muted">Provided by Regolith together with your key. Leave as is unless they told you otherwise.</p>
-			</details>
+		<form class="reg-form reg-form--wide" data-reg-connect-form <?php echo $connected ? 'hidden' : ''; ?>>
+			<?php Reg_Env::I()->render_server_fields(); ?>
 		</form>
 
 		<p class="reg-muted">Your store is registered with its web address, <strong><?php echo esc_html(untrailingslashit(home_url())); ?></strong>. Regolith can't change that later, so connect from your live store.</p>
 
 		<?php if ($connected) : ?>
-			<p><a href="#" data-reg-show-connect>Use a different API key</a></p>
+			<p><a href="#" data-reg-show-connect>Change server or API key</a></p>
 			<?php $this->nav('welcome', 'Continue', 'data-reg-go="categories"'); ?>
 		<?php else : ?>
 			<?php $this->nav('welcome', 'Connect', 'data-reg-connect'); ?>
@@ -560,27 +548,16 @@ class Reg_Wizard
 	}
 
 	/**
-	 * Save the key (and server address), then register / reconnect.
+	 * Save the Live / Staging server fields, then register / reconnect on the chosen one.
+	 * Also used by Settings → Connection.
 	 */
 	public function ajax_connect()
 	{
 		$this->guard();
 
-		$key = trim(sanitize_text_field(wp_unslash($_POST['api_key'] ?? '')));
-		$url = esc_url_raw(trim(wp_unslash($_POST['api_url'] ?? '')));
-
-		if ('' !== $key) {
-			update_option('regolith_api_key', $key);
-		}
-		if ('' !== $url) {
-			update_option('regolith_api_url', untrailingslashit($url));
-		}
-
-		if (! get_option('regolith_api_key')) {
-			wp_send_json_error('Paste your API key first.');
-		}
-		if (! get_option('regolith_api_url')) {
-			wp_send_json_error('Enter the Regolith server address (it came with your API key).');
+		$saved = Reg_Env::I()->save_server_fields(wp_unslash($_POST));
+		if (is_wp_error($saved)) {
+			wp_send_json_error($saved->get_error_message());
 		}
 
 		$result = Reg_API::I()->test_connection();

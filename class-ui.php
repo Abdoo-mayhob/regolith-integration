@@ -289,6 +289,7 @@ class Reg_UI
 						<a href="<?php echo esc_url(self::url($key)); ?>" class="<?php echo $key === $current ? 'is-active' : ''; ?>"><?php echo esc_html($label); ?></a>
 					<?php endforeach; ?>
 				</nav>
+				<?php Reg_Env::I()->render_switch(); ?>
 			</div>
 		</div>
 		<?php
